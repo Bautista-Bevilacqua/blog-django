@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import Q
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
@@ -15,6 +16,25 @@ class PostListView(ListView):
 
     def get_queryset(self):
         return Post.objects.select_related('author')
+
+
+class PostSearchView(ListView):
+    model = Post
+    template_name = 'posts/post_search.html'
+    context_object_name = 'posts'
+
+    def get_queryset(self):
+        self.query = self.request.GET.get('q', '').strip()
+        if not self.query:
+            return Post.objects.none()
+        return Post.objects.select_related('author').filter(
+            Q(title__icontains=self.query) | Q(content__icontains=self.query)
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query'] = self.query
+        return context
 
 
 class PostDetailView(DetailView):
