@@ -127,7 +127,7 @@ El admin está en http://127.0.0.1:8000/admin/
 
 ### 7. (Opcional) Cargar posts de ejemplo
 
-Este comando crea 3 posts publicados y 1 borrador, con el primer superusuario como autor:
+Este comando crea 3 posts publicados y 1 borrador, cada uno con una imagen de ejemplo generada automáticamente. Usa al primer superusuario como autor:
 
 ```bash
 python manage.py cargar_posts_ejemplo
