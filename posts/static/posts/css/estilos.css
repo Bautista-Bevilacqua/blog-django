@@ -42,12 +42,13 @@ body {
 }
 
 .post-card-img {
-    height: 200px;
+    width: 100%;
+    aspect-ratio: 2 / 1;
     object-fit: cover;
 }
 
 .post-img-placeholder {
-    height: 200px;
+    aspect-ratio: 2 / 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -57,9 +58,10 @@ body {
 }
 
 .post-detail-img {
-    max-height: 450px;
     width: 100%;
-    object-fit: cover;
+    max-height: 500px;
+    object-fit: contain;
+    background: #fff;
 }
 
 .post-contenido {
