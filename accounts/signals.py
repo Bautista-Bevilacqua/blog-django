@@ -2,11 +2,11 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import Profile
+from .models import Perfil
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_profile(sender, instance, created, **kwargs):
+def crear_perfil(sender, instance, created, **kwargs):
     """Crea automáticamente un perfil vacío para cada usuario nuevo."""
     if created:
-        Profile.objects.get_or_create(user=instance)
+        Perfil.objects.get_or_create(usuario=instance)

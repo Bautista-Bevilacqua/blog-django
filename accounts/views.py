@@ -3,53 +3,52 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from .forms import ProfileUpdateForm, SignUpForm, UserUpdateForm
-from .models import Profile
+from .forms import PerfilForm, RegistroForm, UsuarioForm
+from .models import Perfil
 
 
-def signup(request):
+def registro(request):
     if request.user.is_authenticated:
-        return redirect('posts:list')
+        return redirect('posts:inicio')
 
     if request.method == 'POST':
-        form = SignUpForm(request.POST)
+        form = RegistroForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, f'¡Bienvenido/a, {user.username}! Tu cuenta fue creada.')
-            return redirect('posts:list')
+            usuario = form.save()
+            login(request, usuario)
+            messages.success(request, f'¡Bienvenido/a, {usuario.username}! Tu cuenta fue creada.')
+            return redirect('posts:inicio')
     else:
-        form = SignUpForm()
-    return render(request, 'accounts/signup.html', {'form': form})
+        form = RegistroForm()
+    return render(request, 'accounts/registro.html', {'form': form})
 
 
 @login_required
-def profile(request):
-    profile_obj, _ = Profile.objects.get_or_create(user=request.user)
-    user_posts = request.user.posts.all()
-    return render(request, 'accounts/profile.html', {
-        'profile': profile_obj,
-        'user_posts': user_posts,
+def perfil(request):
+    perfil_usuario, _ = Perfil.objects.get_or_create(usuario=request.user)
+    return render(request, 'accounts/perfil.html', {
+        'perfil': perfil_usuario,
+        'mis_posts': request.user.posts.all(),
     })
 
 
 @login_required
-def profile_edit(request):
-    profile_obj, _ = Profile.objects.get_or_create(user=request.user)
+def editar_perfil(request):
+    perfil_usuario, _ = Perfil.objects.get_or_create(usuario=request.user)
 
     if request.method == 'POST':
-        user_form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile_obj)
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
+        usuario_form = UsuarioForm(request.POST, instance=request.user)
+        perfil_form = PerfilForm(request.POST, request.FILES, instance=perfil_usuario)
+        if usuario_form.is_valid() and perfil_form.is_valid():
+            usuario_form.save()
+            perfil_form.save()
             messages.success(request, 'Perfil actualizado.')
-            return redirect('accounts:profile')
+            return redirect('accounts:perfil')
     else:
-        user_form = UserUpdateForm(instance=request.user)
-        profile_form = ProfileUpdateForm(instance=profile_obj)
+        usuario_form = UsuarioForm(instance=request.user)
+        perfil_form = PerfilForm(instance=perfil_usuario)
 
-    return render(request, 'accounts/profile_edit.html', {
-        'user_form': user_form,
-        'profile_form': profile_form,
+    return render(request, 'accounts/editar_perfil.html', {
+        'usuario_form': usuario_form,
+        'perfil_form': perfil_form,
     })

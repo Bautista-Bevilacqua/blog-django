@@ -1,34 +1,41 @@
-{% extends 'base.html' %}
+{% extends 'posts/base.html' %}
 
 {% block title %}Mi perfil · Blog Web{% endblock %}
 
 {% block content %}
 <div class="row g-4">
     <div class="col-md-4 text-center">
-        {% if profile.avatar %}
-            <img src="{{ profile.avatar.url }}" class="avatar mb-3" alt="Avatar de {{ user.username }}">
+        {% if perfil.avatar %}
+            <img src="{{ perfil.avatar.url }}" class="avatar mb-3" alt="Avatar de {{ user.username }}">
         {% else %}
             <div class="avatar-placeholder mb-3">{{ user.username|first }}</div>
         {% endif %}
-        <h2 class="h4">{{ user.get_full_name|default:user.username }}</h2>
-        <p class="text-muted mb-1">@{{ user.username }}</p>
-        {% if user.email %}<p class="text-muted small">{{ user.email }}</p>{% endif %}
-        {% if profile.bio %}<p class="post-content">{{ profile.bio }}</p>{% endif %}
-        <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-primary btn-sm">Editar perfil</a>
+        <h1 class="h4">{{ user.get_full_name|default:user.username }}</h1>
+        <p class="text-muted mb-1">Usuario: {{ user.username }}</p>
+        <p class="text-muted small">Email: {{ user.email|default:"(sin email)" }}</p>
+        {% if perfil.biografia %}
+            <p class="post-contenido">{{ perfil.biografia }}</p>
+        {% else %}
+            <p class="text-muted fst-italic">Todavía no escribiste tu biografía.</p>
+        {% endif %}
+        <a href="{% url 'accounts:editar_perfil' %}" class="btn btn-outline-primary btn-sm">Editar perfil</a>
     </div>
     <div class="col-md-8">
-        <h3 class="h5 mb-3">Mis publicaciones ({{ user_posts|length }})</h3>
-        {% if user_posts %}
+        <h2 class="h5 mb-3">Mis posts ({{ mis_posts|length }})</h2>
+        {% if mis_posts %}
             <ul class="list-group">
-                {% for post in user_posts %}
+                {% for post in mis_posts %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-                        <span class="text-muted small">{{ post.created_at|date:"d/m/Y" }}</span>
+                        <a href="{{ post.get_absolute_url }}">{{ post.titulo }}</a>
+                        <span>
+                            <span class="badge {% if post.estado == 'publicado' %}bg-success{% elif post.estado == 'borrador' %}bg-secondary{% else %}bg-dark{% endif %}">{{ post.get_estado_display }}</span>
+                            <span class="text-muted small ms-2">{{ post.fecha_creacion|date:"d/m/Y" }}</span>
+                        </span>
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-muted">Todavía no publicaste nada. <a href="{% url 'posts:create' %}">Crear un post</a></p>
+            <p class="text-muted">Todavía no publicaste nada. <a href="{% url 'posts:crear' %}">Crear un post</a></p>
         {% endif %}
     </div>
 </div>

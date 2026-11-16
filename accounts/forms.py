@@ -2,18 +2,15 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Profile
+from .models import Perfil
 
 
-def _add_bootstrap(form):
+def _aplicar_bootstrap(form):
     for field in form.fields.values():
-        css = 'form-control'
-        if isinstance(field.widget, forms.CheckboxInput):
-            css = 'form-check-input'
-        field.widget.attrs.setdefault('class', css)
+        field.widget.attrs.setdefault('class', 'form-control')
 
 
-class SignUpForm(UserCreationForm):
+class RegistroForm(UserCreationForm):
     email = forms.EmailField(label='Email', required=True)
 
     class Meta(UserCreationForm.Meta):
@@ -22,31 +19,31 @@ class SignUpForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _add_bootstrap(self)
+        _aplicar_bootstrap(self)
 
 
 class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _add_bootstrap(self)
+        _aplicar_bootstrap(self)
 
 
-class UserUpdateForm(forms.ModelForm):
+class UsuarioForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _add_bootstrap(self)
+        _aplicar_bootstrap(self)
 
 
-class ProfileUpdateForm(forms.ModelForm):
+class PerfilForm(forms.ModelForm):
     class Meta:
-        model = Profile
-        fields = ('avatar', 'bio')
-        widgets = {'bio': forms.Textarea(attrs={'rows': 4})}
+        model = Perfil
+        fields = ('biografia', 'avatar')
+        widgets = {'biografia': forms.Textarea(attrs={'rows': 4})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _add_bootstrap(self)
+        _aplicar_bootstrap(self)

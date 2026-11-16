@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from .models import Profile
+from .models import Perfil
 
 
-@admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user',)
-    search_fields = ('user__username', 'user__email')
+@admin.register(Perfil)
+class PerfilAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'biografia')
+    search_fields = ('usuario__username', 'usuario__email')
