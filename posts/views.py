@@ -1,84 +1,97 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db.models import Q
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import PostForm
 from .models import Post
 
 
-class PostListView(ListView):
-    model = Post
-    template_name = 'posts/post_list.html'
-    context_object_name = 'posts'
-    paginate_by = 6
-
-    def get_queryset(self):
-        return Post.objects.select_related('author')
+def _posts_publicados():
+    return Post.objects.filter(estado=Post.ESTADO_PUBLICADO).order_by('-fecha_creacion').select_related('autor')
 
 
-class PostSearchView(ListView):
-    model = Post
-    template_name = 'posts/post_search.html'
-    context_object_name = 'posts'
-
-    def get_queryset(self):
-        self.query = self.request.GET.get('q', '').strip()
-        if not self.query:
-            return Post.objects.none()
-        return Post.objects.select_related('author').filter(
-            Q(title__icontains=self.query) | Q(content__icontains=self.query)
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['query'] = self.query
-        return context
+def _puede_modificar(user, post):
+    return user == post.autor or user.is_superuser
 
 
-class PostDetailView(DetailView):
-    model = Post
-    template_name = 'posts/post_detail.html'
-    context_object_name = 'post'
+def _obtener_post_editable(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    if not _puede_modificar(request.user, post):
+        raise PermissionDenied('Solo el autor puede modificar este post.')
+    return post
 
 
-class PostCreateView(LoginRequiredMixin, CreateView):
-    model = Post
-    form_class = PostForm
-    template_name = 'posts/post_form.html'
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        messages.success(self.request, 'Post publicado correctamente.')
-        return super().form_valid(form)
+def inicio(request):
+    return render(request, 'posts/inicio.html', {'ultimos_posts': _posts_publicados()[:3]})
 
 
-class AuthorRequiredMixin(UserPassesTestMixin):
-    """Solo el autor del post (o un superusuario) puede modificarlo."""
-
-    def test_func(self):
-        post = self.get_object()
-        user = self.request.user
-        return user == post.author or user.is_superuser
+def acerca(request):
+    return render(request, 'posts/acerca.html')
 
 
-class PostUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
-    model = Post
-    form_class = PostForm
-    template_name = 'posts/post_form.html'
-
-    def form_valid(self, form):
-        messages.success(self.request, 'Post actualizado correctamente.')
-        return super().form_valid(form)
+def lista_posts(request):
+    paginador = Paginator(_posts_publicados(), 6)
+    pagina = paginador.get_page(request.GET.get('page'))
+    return render(request, 'posts/lista_posts.html', {'posts': pagina, 'pagina': pagina})
 
 
-class PostDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
-    model = Post
-    template_name = 'posts/post_confirm_delete.html'
-    context_object_name = 'post'
-    success_url = reverse_lazy('posts:list')
+def detalle_post(request, pk):
+    post = get_object_or_404(Post.objects.select_related('autor'), pk=pk)
+    # Los borradores y archivados solo los ve su autor.
+    if post.estado != Post.ESTADO_PUBLICADO and not _puede_modificar(request.user, post):
+        raise Http404('Post no disponible.')
+    return render(request, 'posts/detalle_post.html', {
+        'post': post,
+        'puede_modificar': _puede_modificar(request.user, post),
+    })
 
-    def form_valid(self, form):
-        messages.success(self.request, 'Post eliminado.')
-        return super().form_valid(form)
+
+def buscar_posts(request):
+    consulta = request.GET.get('q', '').strip()
+    posts = []
+    if consulta:
+        posts = _posts_publicados().filter(Q(titulo__icontains=consulta) | Q(contenido__icontains=consulta))
+    return render(request, 'posts/buscar_posts.html', {'posts': posts, 'consulta': consulta})
+
+
+@login_required
+def crear_post(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.autor = request.user
+            post.save()
+            messages.success(request, 'Post creado correctamente.')
+            return redirect(post)
+    else:
+        form = PostForm(initial={'estado': Post.ESTADO_PUBLICADO})
+    return render(request, 'posts/post_form.html', {'form': form})
+
+
+@login_required
+def editar_post(request, pk):
+    post = _obtener_post_editable(request, pk)
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Post actualizado correctamente.')
+            return redirect(post)
+    else:
+        form = PostForm(instance=post)
+    return render(request, 'posts/post_form.html', {'form': form, 'post': post})
+
+
+@login_required
+def eliminar_post(request, pk):
+    post = _obtener_post_editable(request, pk)
+    if request.method == 'POST':
+        post.delete()
+        messages.success(request, 'Post eliminado.')
+        return redirect('posts:lista')
+    return render(request, 'posts/confirmar_eliminar.html', {'post': post})

@@ -4,26 +4,34 @@ from django.urls import reverse
 
 
 class Post(models.Model):
-    title = models.CharField('título', max_length=200)
-    subtitle = models.CharField('subtítulo', max_length=250, blank=True)
-    content = models.TextField('contenido')
-    image = models.ImageField('imagen', upload_to='posts/', blank=True, null=True)
-    author = models.ForeignKey(
+    ESTADO_BORRADOR = 'borrador'
+    ESTADO_PUBLICADO = 'publicado'
+    ESTADO_ARCHIVADO = 'archivado'
+    ESTADOS = [
+        (ESTADO_BORRADOR, 'Borrador'),
+        (ESTADO_PUBLICADO, 'Publicado'),
+        (ESTADO_ARCHIVADO, 'Archivado'),
+    ]
+
+    titulo = models.CharField('título', max_length=200)
+    contenido = models.TextField('contenido')
+    autor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='posts',
         verbose_name='autor',
     )
-    created_at = models.DateTimeField('creado', auto_now_add=True)
-    updated_at = models.DateTimeField('actualizado', auto_now=True)
+    fecha_creacion = models.DateTimeField('fecha de creación', auto_now_add=True)
+    estado = models.CharField('estado', max_length=10, choices=ESTADOS, default=ESTADO_BORRADOR)
+    imagen = models.ImageField('imagen', upload_to='posts/', null=True, blank=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-fecha_creacion']
         verbose_name = 'post'
         verbose_name_plural = 'posts'
 
     def __str__(self):
-        return self.title
+        return self.titulo
 
     def get_absolute_url(self):
-        return reverse('posts:detail', args=[self.pk])
+        return reverse('posts:detalle', args=[self.pk])

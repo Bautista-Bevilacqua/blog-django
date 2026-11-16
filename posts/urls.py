@@ -5,10 +5,12 @@ from . import views
 app_name = 'posts'
 
 urlpatterns = [
-    path('', views.PostListView.as_view(), name='list'),
-    path('buscar/', views.PostSearchView.as_view(), name='search'),
-    path('posts/nuevo/', views.PostCreateView.as_view(), name='create'),
-    path('posts/<int:pk>/', views.PostDetailView.as_view(), name='detail'),
-    path('posts/<int:pk>/editar/', views.PostUpdateView.as_view(), name='update'),
-    path('posts/<int:pk>/eliminar/', views.PostDeleteView.as_view(), name='delete'),
+    path('', views.inicio, name='inicio'),
+    path('acerca/', views.acerca, name='acerca'),
+    path('posts/', views.lista_posts, name='lista'),
+    path('posts/<int:pk>/', views.detalle_post, name='detalle'),
+    path('crear/', views.crear_post, name='crear'),
+    path('posts/<int:pk>/editar/', views.editar_post, name='editar'),
+    path('posts/<int:pk>/eliminar/', views.eliminar_post, name='eliminar'),
+    path('buscar/', views.buscar_posts, name='buscar'),
 ]

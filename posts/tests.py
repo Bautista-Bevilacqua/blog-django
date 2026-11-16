@@ -1,101 +1,134 @@
 import shutil
 import tempfile
-from io import BytesIO
+from io import BytesIO, StringIO
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 
 from .models import Post
 
-TEMP_MEDIA = tempfile.mkdtemp()
+MEDIA_TEMPORAL = tempfile.mkdtemp()
+CLAVE = 'clave-segura-123'
 
 
-def fake_image(name='test.png'):
+def imagen_de_prueba(nombre='prueba.png'):
     buffer = BytesIO()
     Image.new('RGB', (10, 10), 'red').save(buffer, format='PNG')
-    return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
+    return SimpleUploadedFile(nombre, buffer.getvalue(), content_type='image/png')
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA)
-class PostViewsTests(TestCase):
+@override_settings(MEDIA_ROOT=MEDIA_TEMPORAL)
+class PostTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA, ignore_errors=True)
+        shutil.rmtree(MEDIA_TEMPORAL, ignore_errors=True)
 
     def setUp(self):
-        self.author = User.objects.create_user('autor', password='clave-segura-123')
-        self.other = User.objects.create_user('otro', password='clave-segura-123')
-        self.post = Post.objects.create(title='Primer post', content='Hola mundo Django', author=self.author)
+        self.autor = User.objects.create_user('autor', password=CLAVE)
+        self.otro = User.objects.create_user('otro', password=CLAVE)
+        self.post = Post.objects.create(
+            titulo='Primer post', contenido='Hola mundo Django', autor=self.autor, estado=Post.ESTADO_PUBLICADO,
+        )
 
-    def test_anonymous_can_list_and_view_detail(self):
-        self.assertContains(self.client.get(reverse('posts:list')), 'Primer post')
-        response = self.client.get(reverse('posts:detail', args=[self.post.pk]))
-        self.assertContains(response, 'Hola mundo Django')
-        self.assertContains(response, 'Iniciar sesión')
+    def test_inicio_y_acerca(self):
+        respuesta = self.client.get(reverse('posts:inicio'))
+        self.assertContains(respuesta, 'Bienvenido/a')
+        self.assertContains(respuesta, 'posts/css/estilos.css')
+        self.assertContains(self.client.get(reverse('posts:acerca')), 'Sobre el autor')
 
-    def test_detail_without_image_renders(self):
-        response = self.client.get(reverse('posts:detail', args=[self.post.pk]))
-        self.assertEqual(response.status_code, 200)
+    def test_lista_muestra_solo_publicados(self):
+        Post.objects.create(titulo='Un borrador', contenido='x', autor=self.autor, estado=Post.ESTADO_BORRADOR)
+        Post.objects.create(titulo='Un archivado', contenido='x', autor=self.autor, estado=Post.ESTADO_ARCHIVADO)
+        respuesta = self.client.get(reverse('posts:lista'))
+        self.assertContains(respuesta, 'Primer post')
+        self.assertNotContains(respuesta, 'Un borrador')
+        self.assertNotContains(respuesta, 'Un archivado')
 
-    def test_protected_routes_redirect_anonymous_to_login(self):
+    def test_anonimo_ve_detalle_sin_imagen(self):
+        respuesta = self.client.get(reverse('posts:detalle', args=[self.post.pk]))
+        self.assertContains(respuesta, 'Hola mundo Django')
+        self.assertContains(respuesta, 'Publicado')
+        self.assertContains(respuesta, 'Iniciar sesión')
+        self.assertNotContains(respuesta, 'Editar')
+
+    def test_borrador_solo_visible_para_el_autor(self):
+        borrador = Post.objects.create(titulo='Borrador', contenido='x', autor=self.autor)
+        url = reverse('posts:detalle', args=[borrador.pk])
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.client.login(username='autor', password=CLAVE)
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_rutas_protegidas_redirigen_al_login(self):
         login_url = reverse('accounts:login')
         for url in [
-            reverse('posts:create'),
-            reverse('posts:update', args=[self.post.pk]),
-            reverse('posts:delete', args=[self.post.pk]),
+            reverse('posts:crear'),
+            reverse('posts:editar', args=[self.post.pk]),
+            reverse('posts:eliminar', args=[self.post.pk]),
         ]:
-            response = self.client.get(url)
-            self.assertRedirects(response, f'{login_url}?next={url}')
+            self.assertRedirects(self.client.get(url), f'{login_url}?next={url}')
+        self.assertEqual(reverse('posts:crear'), '/crear/')
 
-    def test_anonymous_post_to_delete_does_not_delete(self):
-        self.client.post(reverse('posts:delete', args=[self.post.pk]))
+    def test_anonimo_no_puede_borrar_por_post(self):
+        self.client.post(reverse('posts:eliminar', args=[self.post.pk]))
         self.assertTrue(Post.objects.filter(pk=self.post.pk).exists())
 
-    def test_create_post_with_image(self):
-        self.client.login(username='autor', password='clave-segura-123')
-        response = self.client.post(reverse('posts:create'), {
-            'title': 'Con imagen',
-            'content': 'Contenido',
-            'image': fake_image(),
+    def test_crear_post_con_imagen(self):
+        self.client.login(username='autor', password=CLAVE)
+        respuesta = self.client.post(reverse('posts:crear'), {
+            'titulo': 'Con imagen',
+            'contenido': 'Contenido',
+            'estado': Post.ESTADO_PUBLICADO,
+            'imagen': imagen_de_prueba(),
         })
-        post = Post.objects.get(title='Con imagen')
-        self.assertRedirects(response, post.get_absolute_url())
-        self.assertEqual(post.author, self.author)
-        self.assertTrue(post.image.name.startswith('posts/'))
-        self.assertContains(self.client.get(post.get_absolute_url()), post.image.url)
+        post = Post.objects.get(titulo='Con imagen')
+        self.assertRedirects(respuesta, post.get_absolute_url())
+        self.assertEqual(post.autor, self.autor)
+        self.assertTrue(post.imagen.name.startswith('posts/'))
+        self.assertContains(self.client.get(post.get_absolute_url()), post.imagen.url)
 
-    def test_author_can_edit_and_delete(self):
-        self.client.login(username='autor', password='clave-segura-123')
-        self.client.post(reverse('posts:update', args=[self.post.pk]), {
-            'title': 'Título editado',
-            'content': 'Nuevo contenido',
+    def test_autor_edita_y_borra_con_confirmacion(self):
+        self.client.login(username='autor', password=CLAVE)
+        self.client.post(reverse('posts:editar', args=[self.post.pk]), {
+            'titulo': 'Título editado',
+            'contenido': 'Nuevo contenido',
+            'estado': Post.ESTADO_ARCHIVADO,
+            'imagen': imagen_de_prueba(),
         })
         self.post.refresh_from_db()
-        self.assertEqual(self.post.title, 'Título editado')
+        self.assertEqual(self.post.titulo, 'Título editado')
+        self.assertEqual(self.post.estado, Post.ESTADO_ARCHIVADO)
+        self.assertTrue(self.post.imagen)
 
-        response = self.client.post(reverse('posts:delete', args=[self.post.pk]))
-        self.assertRedirects(response, reverse('posts:list'))
+        url = reverse('posts:eliminar', args=[self.post.pk])
+        self.assertContains(self.client.get(url), '¿Seguro que querés eliminar')
+        self.assertRedirects(self.client.post(url), reverse('posts:lista'))
         self.assertFalse(Post.objects.exists())
 
-    def test_other_user_cannot_edit_or_delete(self):
-        self.client.login(username='otro', password='clave-segura-123')
-        self.assertEqual(self.client.get(reverse('posts:update', args=[self.post.pk])).status_code, 403)
-        self.assertEqual(self.client.post(reverse('posts:delete', args=[self.post.pk])).status_code, 403)
+    def test_otro_usuario_no_puede_editar_ni_borrar(self):
+        self.client.login(username='otro', password=CLAVE)
+        self.assertEqual(self.client.get(reverse('posts:editar', args=[self.post.pk])).status_code, 403)
+        self.assertEqual(self.client.post(reverse('posts:eliminar', args=[self.post.pk])).status_code, 403)
         self.assertTrue(Post.objects.filter(pk=self.post.pk).exists())
 
-    def test_search_by_title_and_content(self):
-        Post.objects.create(title='Otro tema', content='Nada que ver', author=self.author)
-        response = self.client.get(reverse('posts:search'), {'q': 'primer'})
-        self.assertContains(response, 'Primer post')
-        self.assertNotContains(response, 'Otro tema')
+    def test_busqueda_por_titulo_y_contenido(self):
+        Post.objects.create(titulo='Otro tema', contenido='Nada que ver', autor=self.autor, estado=Post.ESTADO_PUBLICADO)
+        respuesta = self.client.get(reverse('posts:buscar'), {'q': 'primer'})
+        self.assertContains(respuesta, 'Primer post')
+        self.assertNotContains(respuesta, 'Otro tema')
+        self.assertContains(self.client.get(reverse('posts:buscar'), {'q': 'django'}), 'Primer post')
 
-        response = self.client.get(reverse('posts:search'), {'q': 'django'})
-        self.assertContains(response, 'Primer post')
+    def test_busqueda_sin_resultados(self):
+        respuesta = self.client.get(reverse('posts:buscar'), {'q': 'inexistente'})
+        self.assertContains(respuesta, 'No se encontraron publicaciones')
 
-    def test_search_without_results(self):
-        response = self.client.get(reverse('posts:search'), {'q': 'inexistente'})
-        self.assertContains(response, 'No se encontraron publicaciones')
+    def test_comando_cargar_posts_ejemplo(self):
+        User.objects.create_superuser('admin', 'admin@example.com', CLAVE)
+        call_command('cargar_posts_ejemplo', stdout=StringIO())
+        call_command('cargar_posts_ejemplo', stdout=StringIO())
+        self.assertEqual(Post.objects.filter(autor__username='admin').count(), 4)
+        self.assertEqual(Post.objects.filter(autor__username='admin', estado=Post.ESTADO_PUBLICADO).count(), 3)
