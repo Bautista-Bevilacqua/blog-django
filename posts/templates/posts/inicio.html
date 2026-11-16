@@ -1,0 +1,27 @@
+{% extends 'posts/base.html' %}
+
+{% block title %}Inicio · Blog Web{% endblock %}
+
+{% block content %}
+<section class="hero mb-5">
+    <h1 class="display-5 fw-bold">Bienvenido/a al Blog Web</h1>
+    <p class="lead mb-4">Un espacio para compartir ideas, aprendizajes y proyectos. Leé lo que publica la comunidad o sumate y escribí tus propios posts.</p>
+    <a href="{% url 'posts:lista' %}" class="btn btn-light btn-lg me-2">Ver publicaciones</a>
+    {% if user.is_authenticated %}
+        <a href="{% url 'posts:crear' %}" class="btn btn-acento btn-lg">Crear post</a>
+    {% else %}
+        <a href="{% url 'accounts:registro' %}" class="btn btn-acento btn-lg">Registrarme</a>
+    {% endif %}
+</section>
+
+<h2 class="h4 mb-3">Últimas publicaciones</h2>
+{% if ultimos_posts %}
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for post in ultimos_posts %}
+            {% include 'posts/_tarjeta_post.html' %}
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="text-muted">Todavía no hay publicaciones.</p>
+{% endif %}
+{% endblock %}

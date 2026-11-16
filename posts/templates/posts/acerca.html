@@ -1,0 +1,29 @@
+{% extends 'posts/base.html' %}
+
+{% block title %}Acerca · Blog Web{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 800px;">
+    <h1 class="mb-4">Acerca de este blog</h1>
+
+    <h2 class="h4">Propósito del sitio</h2>
+    <p>
+        Este blog es el proyecto final del curso de Python. Empezó como un programa de consola que guardaba
+        publicaciones en memoria y después en archivos JSON, y terminó convertido en una aplicación web con Django.
+        Cualquier visitante puede leer y buscar publicaciones. Los usuarios registrados además pueden escribir sus
+        propios posts con imágenes y armar su perfil.
+    </p>
+
+    <h2 class="h4 mt-4">Sobre el autor</h2>
+    <p>
+        Soy <strong>Bautista Bevilacqua</strong>, estudiante de programación en Python. En este proyecto puse en práctica
+        lo aprendido durante el curso: estructuras de datos, funciones, módulos, programación orientada a objetos,
+        persistencia en JSON y, finalmente, desarrollo web con Django (modelos, vistas, templates, formularios,
+        manejo de imágenes y autenticación de usuarios).
+    </p>
+    <p>
+        Podés ver el código del proyecto en
+        <a href="https://github.com/Bautista-Bevilacqua" target="_blank" rel="noopener">mi perfil de GitHub</a>.
+    </p>
+</div>
+{% endblock %}

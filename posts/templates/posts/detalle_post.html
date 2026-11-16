@@ -1,0 +1,30 @@
+{% extends 'posts/base.html' %}
+
+{% block title %}{{ post.titulo }} · Blog Web{% endblock %}
+
+{% block content %}
+<article class="mx-auto" style="max-width: 800px;">
+    {% if post.imagen %}
+        <img src="{{ post.imagen.url }}" class="post-detail-img rounded mb-4" alt="{{ post.titulo }}">
+    {% endif %}
+
+    <h1>{{ post.titulo }}</h1>
+    <p class="text-muted small">
+        Por <strong>{{ post.autor.username }}</strong> &middot; {{ post.fecha_creacion|date:"d/m/Y H:i" }}
+        &middot; Estado:
+        <span class="badge {% if post.estado == 'publicado' %}bg-success{% elif post.estado == 'borrador' %}bg-secondary{% else %}bg-dark{% endif %}">
+            {{ post.get_estado_display }}
+        </span>
+    </p>
+    <hr>
+    <div class="post-contenido mb-4">{{ post.contenido }}</div>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'posts:lista' %}" class="btn btn-outline-secondary">Volver</a>
+        {% if puede_modificar %}
+            <a href="{% url 'posts:editar' post.pk %}" class="btn btn-warning">Editar</a>
+            <a href="{% url 'posts:eliminar' post.pk %}" class="btn btn-danger">Eliminar</a>
+        {% endif %}
+    </div>
+</article>
+{% endblock %}

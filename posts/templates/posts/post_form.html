@@ -1,10 +1,10 @@
-{% extends 'base.html' %}
+{% extends 'posts/base.html' %}
 
-{% block title %}{% if object %}Editar post{% else %}Nuevo post{% endif %} · Blog Web{% endblock %}
+{% block title %}{% if post %}Editar post{% else %}Crear post{% endif %} · Blog Web{% endblock %}
 
 {% block content %}
 <div class="mx-auto" style="max-width: 800px;">
-    <h1 class="h3 mb-4">{% if object %}Editar "{{ object.title }}"{% else %}Nuevo post{% endif %}</h1>
+    <h1 class="h3 mb-4">{% if post %}Editar "{{ post.titulo }}"{% else %}Crear post{% endif %}</h1>
 
     <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
@@ -19,7 +19,7 @@
             </div>
         {% endfor %}
         <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'posts:list' %}{% endif %}" class="btn btn-outline-secondary">Cancelar</a>
+        <a href="{% if post %}{{ post.get_absolute_url }}{% else %}{% url 'posts:lista' %}{% endif %}" class="btn btn-outline-secondary">Cancelar</a>
     </form>
 </div>
 {% endblock %}

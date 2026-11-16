@@ -45,7 +45,7 @@ ROOT_URLCONF = 'blog_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -87,7 +87,6 @@ USE_TZ = True
 
 # Archivos estáticos
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Archivos subidos por los usuarios (imágenes de posts y avatares)
@@ -100,5 +99,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Autenticación
 LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'posts:list'
-LOGOUT_REDIRECT_URL = 'posts:list'
+LOGIN_REDIRECT_URL = 'posts:inicio'
+LOGOUT_REDIRECT_URL = 'posts:inicio'

@@ -6,24 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Blog Web{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'posts/css/estilos.css' %}" rel="stylesheet">
 </head>
 <body class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-blog">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'posts:list' %}">Blog Web</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <a class="navbar-brand" href="{% url 'posts:inicio' %}">Blog Web</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu-principal">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="mainNav">
-                <form class="d-flex ms-lg-3 my-2 my-lg-0" method="get" action="{% url 'posts:search' %}" role="search">
+            <div class="collapse navbar-collapse" id="menu-principal">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'posts:inicio' %}">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'posts:lista' %}">Posts</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'posts:acerca' %}">Acerca</a></li>
+                </ul>
+                <form class="d-flex my-2 my-lg-0" method="get" action="{% url 'posts:buscar' %}" role="search">
                     <input class="form-control form-control-sm me-2" type="search" name="q" placeholder="Buscar posts..." value="{{ request.GET.q|default:'' }}">
                     <button class="btn btn-sm btn-outline-light" type="submit">Buscar</button>
                 </form>
-                <ul class="navbar-nav ms-auto align-items-lg-center">
+                <ul class="navbar-nav ms-lg-3 align-items-lg-center">
                     {% if user.is_authenticated %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'posts:create' %}">Nuevo post</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}">Hola, {{ user.username }}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:perfil' %}">Mi perfil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'posts:crear' %}">Crear post</a></li>
                         <li class="nav-item">
                             <form method="post" action="{% url 'accounts:logout' %}">
                                 {% csrf_token %}
@@ -32,7 +37,7 @@
                         </li>
                     {% else %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Iniciar sesión</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:signup' %}">Registrarse</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:registro' %}">Registrarse</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -49,8 +54,8 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-light py-3 mt-auto border-top">
-        <div class="container text-center text-muted small">Blog Web &middot; Proyecto final con Django</div>
+    <footer class="footer-blog py-3 mt-auto">
+        <div class="container text-center small">Blog Web &middot; Proyecto final con Django</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
