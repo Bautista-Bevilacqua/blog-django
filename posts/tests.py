@@ -132,3 +132,4 @@ class PostTests(TestCase):
         call_command('cargar_posts_ejemplo', stdout=StringIO())
         self.assertEqual(Post.objects.filter(autor__username='admin').count(), 4)
         self.assertEqual(Post.objects.filter(autor__username='admin', estado=Post.ESTADO_PUBLICADO).count(), 3)
+        self.assertFalse(Post.objects.filter(autor__username='admin', imagen='').exists())
