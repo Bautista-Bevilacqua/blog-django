@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar perfil · Blog Web{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 600px;">
+    <h1 class="h3 mb-4">Editar perfil</h1>
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% with form=user_form %}{% include 'accounts/_form_fields.html' %}{% endwith %}
+        {% with form=profile_form %}{% include 'accounts/_form_fields.html' %}{% endwith %}
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
