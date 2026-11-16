@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar post · Blog Web{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 600px;">
+    <h1 class="h3">Eliminar post</h1>
+    <p>¿Seguro que querés eliminar <strong>"{{ post.title }}"</strong>? Esta acción no se puede deshacer.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        <a href="{{ post.get_absolute_url }}" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
